@@ -1,15 +1,69 @@
 package Net::Iperf::Parser;
 
-# ABSTRACT: Parse a single iperf line result
-
 use Moose;
 use namespace::autoclean;
 
-has is_valid        => ( is => 'ro', isa => 'Bool', default => 1 );
+# ABSTRACT: Parse a single iperf line result
+
+=head1 SYNOPSIS
+
+  use Net::Iperf::Parser;
+
+  my $p = new Net::Iperf::Parser;
+
+  $p->parse($row);
+  print $p->dump;
+
+
+=head1 DESCRIPTION
+
+Parse a single iperf line result in default or CSV mode
+
+=cut
+
 has start           => ( is => 'ro', isa => 'Int', default => 0  );
 has end             => ( is => 'ro', isa => 'Int', default => 0  );
-has speed           => ( is => 'ro', isa => 'Num', default => 0  );
+has is_valid        => ( is => 'ro', isa => 'Bool', default => 1 );
 has is_process_avg  => ( is => 'ro', isa => 'Bool', default => 1 );
+has speed           => ( is => 'ro', isa => 'Num', default => 0  );
+
+
+sub duration {
+    my $s   = shift;
+    return $s->end - $s->start;
+}
+
+sub is_global_avg {
+    my $s   = shift;
+    return ($s->is_process_avg && $s->start == 0 && $s->end > 5) || 0;
+}
+
+sub speedk {
+    return shift->speed / 1024;
+}
+
+sub speedm {
+    return shift->speed / (1024 * 1024);
+}
+
+sub dump {
+    my $s = shift;
+
+    my @fld = qw/is_valid start end duration speed speedk speedm
+        is_process_avg is_global_avg/;
+
+    my $ret = "{\n";
+
+    foreach(@fld) {
+        $ret .= "\t$_ => " . $s->$_ . ",\n";
+    }
+
+    $ret .= '}';
+
+    return $ret;
+
+}
+
 
 sub parsecsv {
     my $s       = shift;
@@ -51,42 +105,53 @@ sub parse {
     }
 }
 
-sub duration {
-    my $s   = shift;
-    return $s->end - $s->start;
-}
-
-sub is_global_avg {
-    my $s   = shift;
-    return ($s->is_process_avg && $s->start == 0 && $s->end > 5) || 0;
-}
-
-sub speedk {
-    return shift->speed / 1024;
-}
-
-sub speedm {
-    return shift->speed / (1024 * 1024);
-}
-
-sub dump {
-    my $s = shift;
-
-    my @fld = qw/is_valid start end duration speed speedk speedm
-        is_process_avg is_global_avg/;
-
-    my $ret = "{\n";
-
-    foreach(@fld) {
-        $ret .= "\t$_ => " . $s->$_ . ",\n";
-    }
-
-    $ret .= '}';
-
-    return $ret;
-
-}
 
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+=method start
+
+Return the start range
+
+=method end
+
+Return the end range
+
+=method is_valid
+
+Return if the parsed row is a valid iperf row
+
+=method is_process_avg
+
+Return if the row is a process average value
+
+=method is_global_avg
+
+Return if the row is the last summary value
+
+=method speed
+
+Return the speed calculated in bps
+
+=method speedk
+
+Return the speed calculated in Kbps
+
+=method speedm
+
+Return the speed calculated in Mbps
+
+=method dump
+
+Return a to_string version of the object (like a Data::Dumper::dumper)
+
+=method parsed
+
+=method parsecsv
+
+=head1 SEE ALSO
+
+L<Net::OpenSSH>
+
+=cut
