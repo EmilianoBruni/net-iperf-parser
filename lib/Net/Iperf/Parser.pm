@@ -11,8 +11,26 @@ use namespace::autoclean;
 
   my $p = new Net::Iperf::Parser;
 
-  $p->parse($row);
-  print $p->dump;
+  my @rows = `iperf -c iperf.volia.net -P 2`;
+
+  foreach (@rows) {
+    $p->parse($_);
+    print $p->dump if ($p->is_valid && $p->is_global_avg);
+  }
+
+and result is something like this
+
+  {
+      is_valid          => 1,
+      start             => 0,
+      end               => 10,
+      duration          => 10,
+      speed             => 129024,
+      speedk            => 126,
+      speedm            => 0.123046875,
+      is_process_avg    => 1,
+      is_global_avg     => 1,
+  }
 
 
 =head1 DESCRIPTION
@@ -112,11 +130,11 @@ __PACKAGE__->meta->make_immutable;
 
 =method start
 
-Return the start range
+Return the start time
 
 =method end
 
-Return the end range
+Return the end time
 
 =method is_valid
 
@@ -146,12 +164,16 @@ Return the speed calculated in Mbps
 
 Return a to_string version of the object (like a Data::Dumper::dumper)
 
-=method parsed
+=method parse($row)
 
-=method parsecsv
+Parse a single iperf line result
+
+=method parsecsv($row)
+
+Parse a single iperf line result in CSV mode (-y C)
 
 =head1 SEE ALSO
 
-L<Net::OpenSSH>
+L<iperf|https://iperf.fr/>
 
 =cut
