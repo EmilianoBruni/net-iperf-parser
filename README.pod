@@ -8,7 +8,7 @@ Net::Iperf::Parser - Parse a single iperf line result
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 
