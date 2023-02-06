@@ -2,7 +2,7 @@ package Net::Iperf::Parser;
 
 # ABSTRACT: Parse a single iperf line result
 
-use Mojo::Base::Tiny -base, -signatures;
+use Mojo::Base::Tiny -base;
 
 =head1 SYNOPSIS
 
