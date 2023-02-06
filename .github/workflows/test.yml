@@ -18,7 +18,7 @@ jobs:
         container: ebruni/devel:dzil
         steps:
             - name: Checkout Repo Action
-              uses: actions/checkout@v2
+              uses: actions/checkout@main
 
             - name: Fix ExtUtils::MakeMaker (for Perl 5.16 and 5.18)
               run: cpanm -n App::cpanminus ExtUtils::MakeMaker
@@ -30,7 +30,7 @@ jobs:
               run: dzil build
 
             - name: "Share builded module"
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@main
               with:
                 name: build-share
                 path: ./*.tar.gz
@@ -53,7 +53,7 @@ jobs:
         # Steps represent a sequence of tasks that will be executed as part of the job
         steps:
             - name: Download module from previous job
-              uses: actions/download-artifact@v2
+              uses: actions/download-artifact@main
               with:
                 name: build-share
 
