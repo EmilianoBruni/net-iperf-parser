@@ -1,0 +1,113 @@
+=pod
+
+=head1 NAME
+
+Net::Iperf::Parser - Parse a single iperf line result
+
+=for html <p>
+    <a href="https://github.com/emilianobruni/net-iperf-parser/actions/workflows/test.yml">
+        <img alt="github workflow tests" src="https://github.com/emilianobruni/net-iperf-parser/actions/workflows/test.yml/badge.svg">
+    </a>
+    <img alt="Top language: " src="https://img.shields.io/github/languages/top/emilianobruni/net-iperf-parser">
+    <img alt="github last commit" src="https://img.shields.io/github/last-commit/emilianobruni/net-iperf-parser">
+</p>
+
+=head1 VERSION
+
+version 0.04
+
+=head1 SYNOPSIS
+
+  use Net::Iperf::Parser;
+
+  my $p = new Net::Iperf::Parser;
+
+  my @rows = `iperf -c iperf.volia.net -P 2`;
+
+  foreach (@rows) {
+    $p->parse($_);
+    print $p->dump if ($p->is_valid && $p->is_global_avg);
+  }
+
+and result is something like this
+
+  {
+      is_valid          => 1,
+      start             => 0,
+      end               => 10,
+      duration          => 10,
+      speed             => 129024,
+      speedk            => 126,
+      speedm            => 0.123046875,
+      is_process_avg    => 1,
+      is_global_avg     => 1,
+  }
+
+=head1 DESCRIPTION
+
+Parse a single iperf line result in default or CSV mode
+
+=head1 METHODS
+
+=head2 start
+
+Return the start time
+
+=head2 end
+
+Return the end time
+
+=head2 is_valid
+
+Return if the parsed row is a valid iperf row
+
+=head2 is_process_avg
+
+Return if the row is a process average value
+
+=head2 is_global_avg
+
+Return if the row is the last summary value
+
+=head2 speed
+
+Return the speed calculated in bps
+
+=head2 speedk
+
+Return the speed calculated in Kbps
+
+=head2 speedm
+
+Return the speed calculated in Mbps
+
+=head2 dump
+
+Return a to_string version of the object (like a Data::Dumper::dumper)
+
+=head2 parse($row)
+
+Parse a single iperf line result
+
+=head2 parsecsv($row)
+
+Parse a single iperf line result in CSV mode (-y C)
+
+=encoding UTF-8
+
+=head1 SEE ALSO
+
+L<iperf|https://iperf.fr/>
+
+=head1 AUTHOR
+
+Emiliano Bruni <info@ebruni.it>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2019-2023 by Emiliano Bruni.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
