@@ -1,8 +1,115 @@
 package Net::Iperf::Parser;
 
+use Mojo::Base::Tiny -base;
+
+has start          => 0;
+has end            => 0;
+has is_valid       => 1;
+has is_process_avg => 1;
+has speed          => 0;
+
+sub duration {
+    my $s = shift;
+    return $s->end - $s->start;
+}
+
+sub is_global_avg {
+    my $s = shift;
+    return ( $s->is_process_avg && $s->start == 0 && $s->end > 5 ) || 0;
+}
+
+sub speedk {
+    return shift->speed / 1024;
+}
+
+sub speedm {
+    return shift->speed / ( 1024 * 1024 );
+}
+
+sub dump {
+    my $s = shift;
+
+    my @fld = qw/is_valid start end duration speed speedk speedm
+        is_process_avg is_global_avg/;
+
+    my $ret = "{\n";
+
+    foreach (@fld) {
+        $ret .= "\t$_ => " . $s->$_ . ",\n";
+    }
+
+    $ret .= '}';
+
+    return $ret;
+
+}
+
+sub parsecsv {
+    my $s   = shift;
+    my $row = shift || '';
+    if ( $row =~ /\,/ ) {
+        $s->{is_valid} = 1;
+        my @itms = split( /,/, $row );
+
+        my $t_range = $itms[6];
+        ( $s->{start}, $s->{end} ) = map $_ + 0, split( /-/, $t_range );
+
+        $s->{is_process_avg} = ( $itms[5] == -1 || 0 );
+
+        #$s->{speed} = ($itms[-1] / $s->duration);
+        $s->{speed} = $itms[-1] + 0;
+    } else {
+        $s->{is_valid} = 0;
+    }
+}
+
+sub parse {
+    my $s   = shift;
+    my $row = shift || '';
+    if ( $row =~ /^\[((\s*\d+)|SUM)\]\s+\d/ ) {
+        $s->{is_valid} = 1;
+        my @itms;
+        $row =~ /([\d\.]+-\s*[\d\.]+)\s+sec/;
+        my $t_range = $1;
+        ( $s->{start}, $s->{end} ) = map $_ + 0, split( /-/, $t_range );
+
+        $s->{is_process_avg} = ( $row =~ /^\[SUM\]/ || 0 );
+        $row =~ /\s+([\d\.]+)\s+(\w+)\/sec/;
+        if ( $2 eq 'Mbits' ) {
+            $s->{speed} = ( $1 + 0 ) * 1024 * 1024;
+        } else {
+            $s->{speed} = ( $1 + 0 ) * 1024;
+        }
+    } else {
+        $s->{is_valid} = 0;
+    }
+}
+
+1;
+
+__END__
+
 # ABSTRACT: Parse a single iperf line result
 
-use Mojo::Base::Tiny -base;
+=pod
+
+=encoding UTF-8
+
+=begin :badge
+
+=begin html
+
+<p>
+    <a href="https://github.com/emilianobruni/net-iperf-parser/actions/workflows/test.yml">
+        <img alt="github workflow tests" src="https://github.com/emilianobruni/net-iperf-parser/actions/workflows/test.yml/badge.svg">
+    </a>
+    <img alt="Top language: " src="https://img.shields.io/github/languages/top/emilianobruni/net-iperf-parser">
+    <img alt="github last commit" src="https://img.shields.io/github/last-commit/emilianobruni/net-iperf-parser">
+</p>
+
+=end html
+
+=end :badge
 
 =head1 SYNOPSIS
 
@@ -36,95 +143,7 @@ and result is something like this
 
 Parse a single iperf line result in default or CSV mode
 
-=cut
-
-has start           => 0;
-has end             => 0;
-has is_valid        => 1;
-has is_process_avg  => 1;
-has speed           => 0;
-
-
-sub duration {
-    my $s   = shift;
-    return $s->end - $s->start;
-}
-
-sub is_global_avg {
-    my $s   = shift;
-    return ($s->is_process_avg && $s->start == 0 && $s->end > 5) || 0;
-}
-
-sub speedk {
-    return shift->speed / 1024;
-}
-
-sub speedm {
-    return shift->speed / (1024 * 1024);
-}
-
-sub dump {
-    my $s = shift;
-
-    my @fld = qw/is_valid start end duration speed speedk speedm
-        is_process_avg is_global_avg/;
-
-    my $ret = "{\n";
-
-    foreach(@fld) {
-        $ret .= "\t$_ => " . $s->$_ . ",\n";
-    }
-
-    $ret .= '}';
-
-    return $ret;
-
-}
-
-
-sub parsecsv {
-    my $s       = shift;
-    my $row     = shift || '';
-    if ($row =~ /\,/) {
-        $s->{is_valid} = 1;
-        my @itms = split(/,/,$row);
-
-        my $t_range = $itms[6];
-        ($s->{start},$s->{end}) = map $_+0, split(/-/, $t_range);
-
-        $s->{is_process_avg} = ($itms[5] == -1 || 0);
-        #$s->{speed} = ($itms[-1] / $s->duration);
-        $s->{speed} = $itms[-1] + 0;
-    } else {
-        $s->{is_valid} = 0;
-    }
-}
-
-sub parse {
-    my $s       = shift;
-    my $row     = shift || '';
-    if ($row =~ /^\[((\s*\d+)|SUM)\]\s+\d/) {
-        $s->{is_valid} = 1;
-        my @itms;
-        $row =~ /([\d\.]+-\s*[\d\.]+)\s+sec/;
-        my $t_range = $1;
-        ($s->{start},$s->{end}) = map $_+0, split(/-/, $t_range);
-
-        $s->{is_process_avg} = ($row =~ /^\[SUM\]/ || 0);
-        $row =~/\s+([\d\.]+)\s+(\w+)\/sec/;
-        if ($2 eq 'Mbits') {
-            $s->{speed} = ($1+0) * 1024 * 1024;
-        } else {
-            $s->{speed} = ($1+0) * 1024;
-        }
-    } else {
-        $s->{is_valid} = 0;
-    }
-}
-
-
-
-1;
+=head1 METHODS
 
 =method start
 
