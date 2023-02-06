@@ -1,9 +1,8 @@
 package Net::Iperf::Parser;
 
-use Moose;
-use namespace::autoclean;
-
 # ABSTRACT: Parse a single iperf line result
+
+use Mojo::Base::Tiny -base, -signatures;
 
 =head1 SYNOPSIS
 
@@ -39,11 +38,11 @@ Parse a single iperf line result in default or CSV mode
 
 =cut
 
-has start           => ( is => 'ro', isa => 'Int', default => 0  );
-has end             => ( is => 'ro', isa => 'Int', default => 0  );
-has is_valid        => ( is => 'ro', isa => 'Bool', default => 1 );
-has is_process_avg  => ( is => 'ro', isa => 'Bool', default => 1 );
-has speed           => ( is => 'ro', isa => 'Num', default => 0  );
+has start           => 0;
+has end             => 0;
+has is_valid        => 1;
+has is_process_avg  => 1;
+has speed           => 0;
 
 
 sub duration {
@@ -124,7 +123,6 @@ sub parse {
 }
 
 
-__PACKAGE__->meta->make_immutable;
 
 1;
 
